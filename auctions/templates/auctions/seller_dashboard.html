@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Seller Dashboard</h2>
+<a href="{% url 'create_auction' %}" class="btn btn-primary">Create New Auction</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Current Bid</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for auction in auctions %}
+        <tr>
+            <td>{{ auction.vehicle_title }}</td>
+            <td>${{ auction.get_highest_bid }}</td>
+            <td>{{ auction.status }}</td>
+            <td>
+                <a href="{% url 'auction_detail' auction.id %}" class="btn btn-info btn-sm">View</a>
+                <a href="{% url 'edit_auction' auction.id %}" class="btn btn-warning btn-sm">Edit</a>
+                <a href="{% url 'delete_auction' auction.id %}" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No auctions found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<h3>Bid Activity</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Vehicle</th>
+            <th>Bidder</th>
+            <th>Bid Amount</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for auction in auctions %}
+            {% for bid in auction.bids.all %}
+            <tr>
+                <td>{{ auction.vehicle_title }}</td>
+                <td>{{ bid.bidder.username }}</td>
+                <td>${{ bid.amount }}</td>
+                <td>{{ bid.timestamp }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No bids yet.</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Place a Bid for {{ auction.title }}</h2>
+<p>Current Price: Ksh {{ auction.current_price }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Place Bid</button>
+</form>
+
+<a href="{% url 'auction_detail' auction.id %}">Back to Auction</a>
+{% endblock %}

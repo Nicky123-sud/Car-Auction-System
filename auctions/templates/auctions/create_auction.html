@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">🚗 Create Auction</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Vehicle Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle Name</label>
+                            <input type="text" name="vehicle_name" class="form-control" placeholder="Enter vehicle name" required>
+                        </div>
+
+                        <!-- Starting Price -->
+                        <div class="mb-3">
+                            <label class="form-label">Starting Price</label>
+                            <input type="number" name="starting_price" class="form-control" placeholder="Enter starting price" required>
+                        </div>
+
+                        <!-- Auction End Date -->
+                        <div class="mb-3">
+                            <label class="form-label">Auction End Date</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+
+                        <!-- Vehicle Image Upload -->
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle Image</label>
+                            <input type="file" name="vehicle_image" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <!-- Vehicle Description -->
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle Description</label>
+                            <textarea name="description" class="form-control" rows="4" placeholder="Enter vehicle description" required></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                🚀 Create Auction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Custom Styling for Form Elements -->
+<style>
+    input, select, textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+</style>
+
+{% endblock %}

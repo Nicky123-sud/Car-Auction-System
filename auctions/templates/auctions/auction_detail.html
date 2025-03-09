@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ auction.title }}</h2>
+<img src="{{ auction.image.url }}" alt="{{ auction.title }}" width="300">
+<p>{{ auction.description }}</p>
+<p><strong>Starting Price:</strong> Ksh {{ auction.starting_price }}</p>
+<p><strong>Current Price:</strong> <span id="current-price">Ksh {{ auction.current_price }}</span></p>
+<p><strong>Ends on:</strong> {{ auction.end_time }}</p>
+
+{% if user.is_authenticated %}
+    <h3>Place a Bid</h3>
+    <form method="post" action="{% url 'place_bid' auction.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit Bid</button>
+    </form>
+
+    <h3>Live Bidding</h3>
+    <input type="number" id="bid-amount" placeholder="Enter your bid" min="{{ auction.current_price }}">
+    <button onclick="placeBid()">Place Bid</button>
+
+    <h3>M-Pesa Payment</h3>
+    <input type="text" id="phone" placeholder="Enter Phone Number">
+    <input type="number" id="amount" value="{{ auction.current_price }}" readonly>
+    <button onclick="payWithMpesa()">Pay Now</button>
+{% else %}
+    <p><a href="{% url 'login' %}">Log in</a> to place a bid.</p>
+{% endif %}
+{% comment %} vehicle inspection {% endcomment %}
+<h3>Vehicle Inspection Report</h3>
+{% if auction.vehicleinspection %}
+    <p><strong>Condition Summary:</strong> {{ auction.vehicleinspection.condition_summary }}</p>
+    <p><strong>Engine Status:</strong> {{ auction.vehicleinspection.engine_status }}</p>
+    <p><strong>Body Condition:</strong> {{ auction.vehicleinspection.body_condition }}</p>
+    <p><strong>Tire Condition:</strong> {{ auction.vehicleinspection.tire_condition }}</p>
+    <p><strong>Interior Condition:</strong> {{ auction.vehicleinspection.interior_condition }}</p>
+    <p><strong>Additional Notes:</strong> {{ auction.vehicleinspection.additional_notes }}</p>
+{% else %}
+    <p>No inspection report available.</p>
+{% endif %}
+
+{% comment %} vehicle history {% endcomment %}
+<h3>Vehicle History Report</h3>
+{% if vehicle_history %}
+    <p><strong>Previous Owners:</strong> {{ vehicle_history.previous_owners }}</p>
+    <p><strong>Accident History:</strong> {{ vehicle_history.accident_history }}</p>
+    <p><strong>Service Records:</strong> {{ vehicle_history.service_records }}</p>
+    <p><strong>Mileage:</strong> {{ vehicle_history.mileage }}</p>
+{% else %}
+    <p>No vehicle history available.</p>
+{% endif %}
+
+
+
+<h3>Bid History</h3>
+<ul id="bid-history">
+    {% for bid in auction.bids.all %}
+        <li>{{ bid.bidder.username }} bid Ksh {{ bid.amount }} at {{ bid.timestamp }}</li>
+    {% empty %}
+        <li>No bids yet. Be the first!</li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
+<script>
+    const auctionId = "{{ auction.id }}";
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${protocol}://${window.location.host}/ws/auction/${auctionId}/`);
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        document.getElementById("current-price").innerText = `Ksh ${data.bid_amount}`;
+        document.getElementById("bid-history").innerHTML += `<li><strong>${data.bidder}</strong> bid Ksh ${data.bid_amount} at ${data.timestamp}</li>`;
+    };
+
+    function placeBid() {
+        const bidAmount = document.getElementById("bid-amount").value;
+        if (!bidAmount || isNaN(bidAmount) || bidAmount <= 0) {
+            alert("Please enter a valid bid amount.");
+            return;
+        }
+
+        socket.send(JSON.stringify({
+            bid_amount: parseFloat(bidAmount),
+            auction_id: auctionId
+        }));
+        document.getElementById("bid-amount").value = "";
+    }
+
+    function payWithMpesa() {
+        const phone = document.getElementById("phone").value;
+        const amount = document.getElementById("amount").value;
+
+        if (!phone || phone.length !== 10 || isNaN(phone)) {
+            alert("Please enter a valid phone number.");
+            return;
+        }
+
+        fetch("/mpesa/stkpush/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ phone: phone, amount: amount })
+        })
+        .then(response => response.json())
+        .then(data => alert("M-Pesa Payment initiated!"))
+        .catch(error => console.error("Error:", error));
+    }
+</script>

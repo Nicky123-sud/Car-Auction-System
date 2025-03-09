@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2 class="text-center mt-4">🚗 Active Auctions</h2>
+    <div class="row">
+        {% for auction in auctions %}
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                <div class="card shadow-lg border-0 rounded">
+                    <img src="{{ auction.image.url }}" class="card-img-top img-fluid" alt="{{ auction.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ auction.title }}</h5>
+                        <p class="card-text text-muted">Starting Bid: <strong>KES {{ auction.starting_price }}</strong></p>
+                        <a href="{% url 'auction_detail' auction.id %}" class="btn btn-primary btn-block">View Auction</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-center">No active auctions available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
