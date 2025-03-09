@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">📜 My Bid History</h2>
+
+    <!-- Search & Filter Options -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <input type="text" id="searchInput" class="form-control w-50" placeholder="🔍 Search by vehicle name..." onkeyup="filterBids()">
+        <select class="form-select w-25" id="filterStatus" onchange="filterBids()">
+            <option value="">All Status</option>
+            <option value="Won">🏆 Won</option>
+            <option value="Pending">⏳ Pending</option>
+            <option value="Lost">❌ Lost</option>
+        </select>
+    </div>
+
+    <!-- Bid History Table -->
+    <div class="table-responsive">
+        <table class="table table-striped text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>🚗 Vehicle</th>
+                    <th>💰 Bid Amount</th>
+                    <th>📅 Date</th>
+                    <th>📊 Status</th>
+                </tr>
+            </thead>
+            <tbody id="bidTable">
+                {% for bid in bids %}
+                <tr>
+                    <td class="d-flex align-items-center">
+                        <img src="{{ bid.auction.vehicle.image.url }}" alt="Car Image" class="rounded me-2" width="50">
+                        <a href="{% url 'auction_detail' bid.auction.id %}" class="fw-bold text-decoration-none">{{ bid.auction.vehicle.title }}</a>
+                    </td>
+                    <td><strong>${{ bid.amount }}</strong></td>
+                    <td>{{ bid.date_created|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if bid.status == 'Won' %}bg-success{% elif bid.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ bid.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-muted">No bids placed yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Bid History Pagination">
+        <ul class="pagination justify-content-center">
+            {% if bids.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ bids.previous_page_number }}">Previous</a></li>
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">Page {{ bids.number }} of {{ bids.paginator.num_pages }}</span></li>
+
+            {% if bids.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ bids.next_page_number }}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ bids.paginator.num_pages }}">Last</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<!-- JavaScript for Search & Filtering -->
+<script>
+    function filterBids() {
+        let searchInput = document.getElementById("searchInput").value.toLowerCase();
+        let filterStatus = document.getElementById("filterStatus").value;
+        let rows = document.getElementById("bidTable").getElementsByTagName("tr");
+
+        for (let row of rows) {
+            let vehicleName = row.getElementsByTagName("td")[0]?.innerText.toLowerCase();
+            let bidStatus = row.getElementsByTagName("td")[3]?.innerText.trim();
+
+            let matchesSearch = vehicleName.includes(searchInput);
+            let matchesStatus = filterStatus === "" || bidStatus === filterStatus;
+
+            row.style.display = matchesSearch && matchesStatus ? "" : "none";
+        }
+    }
+</script>
+
+{% endblock %}

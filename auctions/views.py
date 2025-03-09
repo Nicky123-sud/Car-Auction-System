@@ -2,15 +2,35 @@ from django.shortcuts import render, redirect, get_object_or_404
 from users.decorators import role_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
-from .forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from django.contrib.admin.views.decorators import staff_member_required
-from .models import User, Auction, Bid, VehicleInspection, Vehicle
-from .forms import AuctionForm, BidForm, VehicleInspectionForm
+from .models import User, Auction, Bid, VehicleInspection, Vehicle, Notification
+from .forms import UserRegisterForm, AuctionForm, BidForm, VehicleInspectionForm
 from .utils import fetch_vehicle_history
-
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json  # ✅ Correct standard Python import
+import re  # ✅ Correct standard Python import
+import requests
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.conf import settings
+from .models import Payment
+import base64
+import datetime
+from django.views.decorators.csrf import csrf_exempt
+import requests
+import json
+import base64
+import datetime
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 # ------------------ User Authentication ------------------ #
 
@@ -157,9 +177,14 @@ def seller_dashboard(request):
     return render(request, "auctions/seller_dashboard.html", {"auctions": auctions})
 
 
-@role_required(["bidder"])
+@login_required
 def bidder_dashboard(request):
-    return render(request, "auctions/bidder_dashboard.html")
+    pending_payments = Payment.objects.filter(user=request.user, status="Pending")
+
+    context = {
+        "pending_payments": pending_payments.exists(),
+    }
+    return render(request, "auctions/bidder.html", context)
 
 
 # ------------------ Auction Management ------------------ #
@@ -287,3 +312,147 @@ def search_vehicle(request):
     years = Vehicle.objects.values_list('year', flat=True).distinct().order_by('-year')
 
     return render(request, 'auctions/search_vehicle.html', {'vehicles': vehicles, 'years': years})
+
+@login_required
+def bid_history(request):
+    # Use bidder instead of user
+    bids_list = Bid.objects.filter(bidder=request.user).select_related('auction__vehicle').order_by('-timestamp')
+
+    # Paginate Results (10 bids per page)
+    paginator = Paginator(bids_list, 10)
+    page_number = request.GET.get('page')
+    bids = paginator.get_page(page_number)
+
+    # Get unique years for filtering dropdown
+    years = Vehicle.objects.values_list('year', flat=True).distinct().order_by('-year')
+
+    context = {
+        'bids': bids,
+        'years': years,
+    }
+    return render(request, 'auctions/bid_history.html', context)
+
+
+@login_required
+def notifications(request):
+    # Fetch user notifications (ordered by newest first)
+    user_notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')
+
+    # Paginate results (10 notifications per page)
+    paginator = Paginator(user_notifications, 10)
+    page_number = request.GET.get('page')
+    notifications_page = paginator.get_page(page_number)
+
+    context = {
+        'notifications': notifications_page,
+        'unread_notifications_count': user_notifications.filter(read_status=False).count(),
+    }
+    return render(request, 'auctions/notifications.html', context)
+
+
+@login_required
+def mark_notification_read(request, notification_id):
+    if request.method == "POST":
+        notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+        notification.read_status = True
+        notification.save()
+        return JsonResponse({"status": "success", "message": "Notification marked as read"})
+    return JsonResponse({"status": "error", "message": "Invalid request"}, status=400)
+
+
+
+@csrf_exempt
+@login_required
+def quick_bid(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = data.get('amount')
+            auction_id = data.get('auction_id')
+            
+            auction = Auction.objects.get(id=auction_id)
+            
+            #Create a new bid
+            new_bid = Bid.objects.create(user=request.user, auction=auction, amount=amount)
+            
+            return JsonResponse({'message': 'Bid placed successfully!', 'bid_id': new_bid.id}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def initiate_payment(request):
+    if request.method == "POST":
+        phone_number = request.POST.get("phone_number")
+        amount = request.POST.get("amount")
+
+        # Generate Lipa Na M-Pesa Online Shortcode and Password
+        business_short_code = settings.MPESA_BUSINESS_SHORTCODE
+        passkey = settings.MPESA_PASSKEY
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        password = base64.b64encode(f"{business_short_code}{passkey}{timestamp}".encode()).decode()
+
+        # M-Pesa API Endpoint
+        access_token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        stk_push_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+
+        # Get M-Pesa Access Token
+        access_token_response = requests.get(access_token_url, auth=(settings.MPESA_CONSUMER_KEY, settings.MPESA_CONSUMER_SECRET))
+        access_token = access_token_response.json().get("access_token")
+
+        # STK Push Request
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        payload = {
+            "BusinessShortCode": business_short_code,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": amount,
+            "PartyA": phone_number,
+            "PartyB": business_short_code,
+            "PhoneNumber": phone_number,
+            "CallBackURL": settings.MPESA_CALLBACK_URL,
+            "AccountReference": "CarAuction",
+            "TransactionDesc": "Payment for Car Auction"
+        }
+
+        response = requests.post(stk_push_url, json=payload, headers=headers)
+        response_data = response.json()
+
+        # Save Payment Record
+        if response_data.get("ResponseCode") == "0":
+            Payment.objects.create(
+                user=request.user,
+                transaction_id=response_data["CheckoutRequestID"],
+                phone_number=phone_number,
+                amount=amount,
+                status="Pending"
+            )
+            return JsonResponse({"message": "Payment initiated successfully. Check your phone to complete the payment."})
+        else:
+            return JsonResponse({"error": "Payment initiation failed"}, status=400)
+    return render(request, "auctions/payment.html")
+
+@csrf_exempt
+def mpesa_callback(request):
+    if request.method == "POST":
+        data = request.body.decode("utf-8")
+        response_data = json.loads(data)
+        
+        checkout_request_id = response_data["Body"]["stkCallback"]["CheckoutRequestID"]
+        result_code = response_data["Body"]["stkCallback"]["ResultCode"]
+        
+        
+        # Get Payment Record
+        payment = Payment.objects.filter(transaction_id=checkout_request_id).first()
+        if payment:
+            if result_code == 0:
+                payment.status = "Completed"
+            else:
+                payment.status = "Failed"
+            payment.save()
+
+        return JsonResponse({"message": "Payment status updated successfully."})
+    return JsonResponse({"error": "Invalid request"}, status=400)

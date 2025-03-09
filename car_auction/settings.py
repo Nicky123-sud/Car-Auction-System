@@ -145,12 +145,13 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # ✅ MPesa Payment Integration (Ensure you update credentials)
-MPESA_ENV = "sandbox"  # Change to "production" when live
-MPESA_CONSUMER_KEY = "cCyaNg6VFQgLjwJ0QaPLML3vanNbzBLmCTODMGnaRpU20TfH"
-MPESA_CONSUMER_SECRET = "onTzPOTB6fHp6ch2mgsmRRNOYEy0sD4tTMwjGXRNpQHwWpmh5gSGAY2R9BIZykOz"
-MPESA_SHORTCODE = "N/A"
-MPESA_PASSKEY = "your_passkey"
-MPESA_CALLBACK_URL = "https://yourdomain.com/mpesa/callback/"
+# M-Pesa API Credentials
+MPESA_BUSINESS_SHORTCODE = "174379"  # Sandbox shortcode
+MPESA_PASSKEY = "your_real_passkey_here"
+MPESA_CONSUMER_KEY = "LyfOVAO4qKqEWHXTIRO5adYxwGAK0KkhS1FgGPtGjIyllfsq"
+MPESA_CONSUMER_SECRET = "N4SoZwiX6ddSAjafrcduGLPQ5nnTJfVna03K3sLevbHpOgPLDAaQWWx4pBqAkucV"
+MPESA_CALLBACK_URL = "https://yourwebsite.com/payment/callback/"  # Replace with your real callback URL
+
 
 # ✅ Vehicle History API (Ensure you update API details)
 VEHICLE_HISTORY_API_URL = "https://api.example.com/vin/"
