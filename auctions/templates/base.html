@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+i{% comment %} <!DOCTYPE html>
 <html lang="en">
 <head>
     {% load static %}
@@ -188,5 +188,236 @@
 </script>
 
     {% block extra_js %}{% endblock extra_js %}
+</body>
+</html> {% endcomment %}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Car Auction System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    <style>
+        /* General Page Styling */
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #343a40;
+            color: white;
+            padding-top: 20px;
+            transition: all 0.3s ease-in-out;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #sidebar a {
+            color: white;
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        #sidebar a:hover {
+            background: #007bff;
+            border-radius: 5px;
+        }
+
+        /* Active Link Highlight */
+        #sidebar .active {
+            background: #007bff;
+            border-radius: 5px;
+        }
+
+        /* Content Area */
+        #content {
+            margin-left: 250px; /* Space for sidebar */
+            width: calc(100% - 250px);
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Sidebar Toggle for Mobile */
+        @media (max-width: 768px) {
+            #sidebar {
+                left: -250px; /* Hide by default */
+                position: fixed;
+            }
+
+            #sidebar.open {
+                left: 0;
+            }
+
+            #content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        /* Toggle Button */
+        #toggleSidebar {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <nav id="sidebar" class="bg-dark text-white p-4 position-fixed h-100 shadow-sm d-md-block" style="width: 250px; left: 0; transition: all 0.3s ease-in-out;">
+                <h4 class="text-center">Car Auction</h4>
+                <a href="{% url 'index' %}" class="nav-link text-white"><i class="fas fa-home"></i> Home</a>
+                <a href="{% url 'auction_list' %}" class="nav-link text-white"><i class="fas fa-car"></i> Browse Auctions</a>
+                <a href="{% url 'search_vehicle' %}" class="nav-link text-white"><i class="fas fa-search"></i> Search Vehicles</a>
+                <a href="{% url 'profile' %}" class="nav-link text-white"><i class="fas fa-user"></i> Profile</a>
+                <a href="{% url 'notifications' %}" class="nav-link text-white"><i class="fas fa-bell"></i> Notifications</a>
+            <!-- Admin Navigation (Visible only to Admins) -->
+            {% if user.is_staff %}
+                <h6 class="mt-4">Admin Panel</h6>
+                <a href="{% url 'admin_dashboard' %}" class="nav-link text-white"><i class="fas fa-cogs"></i> Admin Dashboard</a>
+            {% endif %}
+
+            <!--Seller Navigation (visible only to sellers)-->
+            {% if user.is_seller %}
+                <h6 class="mt-4">Seller Panel</h6>
+                <a href="{% url 'seller_dashboard' %}" class="nav-link text-white"><i class="fas fa-chart_line></i>seller_dashboard</a>
+                <a href="{% url 'create_auction' %}" class="nav-link text-white"><i class="fas fa-plus-circle"></i> Create Auction</a>
+                <a href="{% url 'edit_auction' auction_id=1 %}" class="nav-link text-white"><i class="fas fa-edit"></i> Edit Auction</a>
+                <a href="{% url 'delete_auction' auction_id=1 %}" class="nav-link text-white"><i class="fas fa-trash-alt"></i> Delete Auction</a>
+            {% endif %}
+            {% if user.is_bidder %}
+                <h6 class="mt-4">Bidder Panel</h6>
+                <a href="{% url 'bidder_dashboard' %}" class="nav-link text-white"><i class="fas fa-tachometer-alt"></i> Bidder Dashboard</a>
+                <a href="{% url 'bid_history' %}" class="nav-link text-white"><i class="fas fa-gavel"></i> My Bids</a>
+                <a href="{% url 'place_bid' auction_id=1 %}" class="nav-link text-white"><i class="fas fa-hand-holding-usd"></i> Place a Bid</a>
+                <a href="{% url 'payment' %}" class="nav-link text-white"><i class="fas fa-money-bill-wave"></i> Make Payment</a>
+            {% endif %}
+        </nav>
+    <!-- Main Content -->
+      <div id="content">
+        <button id="toggleSidebar" class="btn btn-dark mb-3 d-md-none"><i class="fas fa-bars"></i></button>
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let sidebar = document.getElementById("sidebar");
+            let toggleSidebarBtn = document.getElementById("toggleSidebar");
+            let content = document.getElementById("content");
+
+            // Toggle Sidebar Functionality
+            toggleSidebarBtn.addEventListener("click", function () {
+                sidebar.classList.toggle("open");
+
+                // Save the sidebar state in localStorage
+                if (sidebar.classList.contains("open")) {
+                    localStorage.setItem("sidebarState", "open");
+                } else {
+                    localStorage.setItem("sidebarState", "closed");
+                }
+            });
+
+            // Load Sidebar State on Page Load
+            if (localStorage.getItem("sidebarState") === "open") {
+                sidebar.classList.add("open");
+            }
+        });
+    </script>
+
+<!-- jQuery and Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Initialize New Cars Carousel
+        $("#new-cars-carousel").owlCarousel({
+            loop: true,
+            margin: 0,
+            nav: false,
+            dots: true,
+            autoplay: true,
+            autoplayTimeout: 2500,
+            autoplayHoverPause: true,
+            smartSpeed: 1200,
+            items: 1
+        });
+
+        // Initialize Brand Section Carousel
+        $(".brand-item").owlCarousel({
+            loop: true,
+            margin: 10,
+            nav: false,
+            dots: false,
+            autoplay: true,
+            autoplayTimeout: 2500,
+            autoplayHoverPause: false,
+            responsive: {
+                0: { items: 2 },
+                600: { items: 3 },
+                1000: { items: 5 }
+            }
+        });
+
+        // Initialize Testimonial Carousel
+        setTimeout(function () {
+            $(".testimonial-carousel").owlCarousel({
+                loop: true,
+                margin: 10,
+                nav: false,
+                autoplay: true,
+                autoplayTimeout: 3000,
+                smartSpeed: 1200,
+                rtl: true,
+                responsive: {
+                    0: { items: 1 },
+                    600: { items: 2 },
+                    1000: { items: 3 }
+                }
+            });
+        }, 500); // Delay execution to ensure elements exist
+    });
+</script>
+
+<style>
+    /* Sidebar Open & Close Styles */
+    #sidebar {
+        transition: all 0.3s ease-in-out;
+    }
+
+    #sidebar.open {
+        left: 0;
+    }
+
+    #content.expanded {
+        margin-left: 0 !important;
+    }
+</style>
+
 </body>
 </html>

@@ -456,3 +456,9 @@ def mpesa_callback(request):
 
         return JsonResponse({"message": "Payment status updated successfully."})
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+
+def seller_auctions(request):
+    # Fetch and display seller's auctions
+    return render(request, 'auctions/seller_auctions.html')

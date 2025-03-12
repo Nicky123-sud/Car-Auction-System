@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     register, user_login, user_logout, dashboard, create_auction,
-    auction_list, auction_detail, place_bid, seller_dashboard,
+    auction_list, auction_detail, place_bid, seller_dashboard, seller_auctions,
     bidder_dashboard, edit_auction, delete_auction, admin_dashboard,
     add_user, update_user, delete_user, home, profile, search_vehicle, bid_history, notifications, quick_bid, mark_notification_read, initiate_payment, mpesa_callback
 )
@@ -25,6 +25,7 @@ urlpatterns = [
     path("dashboard/", dashboard, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
     path("dashboard/seller/", seller_dashboard, name="seller_dashboard"),
+    path("dashboard/seller/auctions/", seller_auctions, name="seller_auctions"),  # ✅ Added this
     path("dashboard/bidder/", bidder_dashboard, name="bidder_dashboard"),
     path('notifications/', notifications, name='notifications'),
     path('bids/quick/', quick_bid, name='quick_bid'),
@@ -45,10 +46,8 @@ urlpatterns = [
     path("admin/update-user/<int:user_id>/", update_user, name="update_user"),
     path("admin/delete-user/<int:user_id>/", delete_user, name="delete_user"),
     
-     path('notifications/', notifications, name='notifications'),
+    path('notifications/', notifications, name='notifications'),
     path('notifications/mark-read/<int:notification_id>/', mark_notification_read, name='mark_notification_read'),
     path("payment/", initiate_payment, name="initiate_payment"),
     path("payment/callback/", mpesa_callback, name="mpesa_callback"),
-    path("dashboard/bidder/", bidder_dashboard, name="bidder_dashboard"),
-    path("payment/", initiate_payment, name="initiate_payment"),
 ]
