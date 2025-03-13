@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,7 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = 'django-insecure-^kv%z(5ix_$4hw)2fn=o48g6)09(7hv@ilmhppt%fasbo=i($v'
 DEBUG = True
-ALLOWED_HOSTS = []
+
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")]
+
 
 # Installed apps
 INSTALLED_APPS = [
@@ -159,3 +163,11 @@ VEHICLE_HISTORY_API_KEY = "your_api_key"
 
 # ✅ Default Primary Key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Configure PostgreSQL database
+DATABASES['default'] = dj_database_url.config(default=os.getenv("DATABASE_URL"))
+
+# Static files setup for Render
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
