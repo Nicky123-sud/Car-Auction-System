@@ -4,6 +4,14 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+    <!-- Welcome Section -->
+    <div class="card shadow-sm mb-4 p-4 text-center bg-light">
+        <h2 class="fw-bold">Welcome, {{ user.username }}! 👋</h2>
+        <p class="text-muted">Membership Level: <strong>{{ user.profile.membership_level }}</strong></p>
+        <button class="btn btn-outline-dark mt-2" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+    </div>
+
+    <!-- Seller Dashboard Header -->
     <div class="card shadow-sm mb-4">
         <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
             <h2 class="mb-0">Seller Dashboard</h2>
@@ -15,7 +23,7 @@
 
     <!-- Auction Statistics -->
     <div class="row mb-4">
-        <div class="col-lg-6 col-md-12">
+        <div class="col-lg-6 col-md-12 mb-3">
             <div class="card shadow-sm p-3">
                 <h5>Total Revenue</h5>
                 <canvas id="revenueChart"></canvas>
@@ -78,41 +86,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Bid Activity Table -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h4 class="mb-3">Recent Bids</h4>
-            <div class="table-responsive">
-                <table class="table table-hover table-striped align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Vehicle</th>
-                            <th>Bidder</th>
-                            <th>Bid Amount</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for auction in auctions %}
-                            {% for bid in auction.bids.all %}
-                            <tr>
-                                <td class="text-primary">{{ auction.vehicle_title }}</td>
-                                <td class="text-dark">{{ bid.bidder.username }}</td>
-                                <td class="text-success">${{ bid.amount }}</td>
-                                <td class="text-muted">{{ bid.timestamp }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">No bids yet.</td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Chart.js Library -->
@@ -144,5 +117,9 @@
             }]
         }
     });
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
 </script>
 {% endblock %}

@@ -1,198 +1,3 @@
-i{% comment %} <!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load static %}
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Car Auction System{% endblock %}</title>
-    
-    <!-- Owl Carousel CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-    
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    
-    <style>
-        body { padding-top: 70px; }
-        .light-mode { background-color: #ffffff; color: #000000; }
-        .dark-mode { background-color: #121212; color: #ffffff; }
-        .dark-mode .navbar { background-color: #333 !important; }
-        .nav-link.active { font-weight: bold; color: #f8d210 !important; }
-        
-        /* Scroll-to-Top Button */
-        #scroll-Top {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: none;
-            z-index: 9999;
-            transition: opacity 0.3s;
-        }
-        #scroll-Top button {
-            width: 40px; height: 40px; border-radius: 50%;
-            border: 1px solid #4e4ffa; background: #4e4ffa; color: #fff;
-            cursor: pointer; transition: background 0.5s, color 0.5s;
-        }
-        #scroll-Top button:hover { background: #fff; color: #4e4ffa; }
-
-        .full-screen-car {
-            width: 100%%;
-            height: 50%%;
-            object-fit: cover;
-        }
-        
-    </style>
-    {% block extra_head %}{% endblock extra_head %}
-</head>
-<body class="light-mode">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">Car Auction</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'auction_list' %}active{% endif %}" href="{% url 'auction_list' %}">Listings</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create_auction' %}active{% endif %}" href="{% url 'create_auction' %}">Create Auction</a></li>
-                </ul>
-                
-                <!-- Search Bar -->
-                <form class="d-flex" action="{% url 'search_vehicle' %}" method="GET">
-                    <input class="form-control me-2" type="search" placeholder="Search vehicles..." name="q">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
-                </form>
-
-                <!-- Right-Side Navigation -->
-                <ul class="navbar-nav ms-3">
-                    {% if user.is_authenticated %}
-                        <!-- Dashboard Dropdown -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Dashboard
-                            </a>
-                            <ul class="dropdown-menu">
-                                {% if user.is_staff %}
-                                    <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
-                                {% elif user.is_seller %}
-                                    <li><a class="dropdown-item" href="{% url 'seller_dashboard' %}">Seller Dashboard</a></li>
-                                {% elif user.is_bidder %}
-                                    <li><a class="dropdown-item" href="{% url 'bidder_dashboard' %}">Bidder Dashboard</a></li>
-                                {% else %}
-                                    <li><a class="dropdown-item" href="{% url 'profile' %}">User Profile</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-
-                        <!-- User Account Dropdown -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Account
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Login</a></li>
-                        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}" href="{% url 'register' %}">Register</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container mt-4">
-        {% block content %}{% endblock content %}
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-3 mt-4">
-        <p>&copy; 2025 Car Auction System. All rights reserved.</p>
-    </footer>
-
-    <!-- Scroll-to-Top Button -->
-    <div id="scroll-Top"><button type="button"><i class="fa fa-arrow-up"></i></button></div>
-
-    <!-- jQuery and Bootstrap JS (Dropdowns will now work) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-
-    <script>
-      $(document).ready(function () {
-          $(".owl-carousel").owlCarousel({
-              loop: true,
-              margin: 20,
-              nav: false,
-              autoplay: true,
-              autoplayTimeout: 2000,
-              autoplayHoverPause: true,
-              smartSpeed: 1500,
-              rtl: true,
-              responsive: {
-                  0: { items: 2 },
-                  600: { items: 3 },
-                  1000: { items: 5 }
-              }
-          });
-
-          // Enable Bootstrap dropdowns
-          var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
-          var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-              return new bootstrap.Dropdown(dropdownToggleEl);
-          });
-      });
-    </script>
-    <!-- jQuery and Owl Carousel Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-
-<script>
-    $(document).ready(function () {
-        // New Cars Carousel
-        $("#new-cars-carousel").owlCarousel({
-            loop: true,
-            margin: 0,
-            nav: false,
-            dots: true,
-            autoplay: true,
-            autoplayTimeout: 4000,
-            autoplayHoverPause: true,
-            smartSpeed: 1200,
-            items: 1
-        });
-
-        // Brand Carousel
-        $(".brand-item").owlCarousel({
-            loop: true,
-            margin: 10,
-            nav: false,
-            dots: false,
-            autoplay: true,
-            autoplayTimeout: 2500,
-            autoplayHoverPause: false,
-            responsive: {
-                0: { items: 2 },
-                600: { items: 3 },
-                1000: { items: 5 }
-            }
-        });
-    });
-</script>
-
-    {% block extra_js %}{% endblock extra_js %}
-</body>
-</html> {% endcomment %}
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -207,7 +12,6 @@ i{% comment %} <!DOCTYPE html>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    
     <style>
         /* General Page Styling */
         body {
@@ -215,7 +19,7 @@ i{% comment %} <!DOCTYPE html>
             min-height: 100vh;
             background-color: #f8f9fa;
         }
-
+        
         /* Sidebar Styling */
         #sidebar {
             width: 250px;
@@ -226,11 +30,25 @@ i{% comment %} <!DOCTYPE html>
             background: #343a40;
             color: white;
             padding-top: 20px;
-            transition: all 0.3s ease-in-out;
-            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
             z-index: 1000;
+            overflow-y: auto;
         }
-
+        
+        /* Hide Sidebar by Default ONLY on Mobile */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-250px); /* Hide on mobile */
+            }
+        }
+        
+        /* Show Sidebar on Desktop */
+        @media (min-width: 769px) {
+            #sidebar {
+                transform: translateX(0); /* Always visible on large screens */
+            }
+        }
+        
         #sidebar a {
             color: white;
             display: block;
@@ -238,18 +56,27 @@ i{% comment %} <!DOCTYPE html>
             text-decoration: none;
             transition: 0.3s;
         }
-
+        
         #sidebar a:hover {
             background: #007bff;
             border-radius: 5px;
         }
-
-        /* Active Link Highlight */
-        #sidebar .active {
-            background: #007bff;
-            border-radius: 5px;
+        
+        /* Sidebar Open State */
+        #sidebar.open {
+            transform: translateX(0);
         }
-
+        
+        /* Close button (hidden by default) */
+        #closeSidebar {
+            display: none;
+        }
+        
+        /* Show close button when sidebar is open */
+        #sidebar.open + #closeSidebar {
+            display: block;
+        }
+        
         /* Content Area */
         #content {
             margin-left: 250px; /* Space for sidebar */
@@ -257,24 +84,15 @@ i{% comment %} <!DOCTYPE html>
             padding: 20px;
             transition: margin-left 0.3s ease-in-out;
         }
-
-        /* Sidebar Toggle for Mobile */
+        
+        /* Adjust Content When Sidebar Closes (Mobile Only) */
         @media (max-width: 768px) {
-            #sidebar {
-                left: -250px; /* Hide by default */
-                position: fixed;
-            }
-
-            #sidebar.open {
-                left: 0;
-            }
-
             #content {
                 margin-left: 0;
                 width: 100%;
             }
         }
-
+        
         /* Toggle Button */
         #toggleSidebar {
             position: fixed;
@@ -282,6 +100,7 @@ i{% comment %} <!DOCTYPE html>
             left: 15px;
             z-index: 1100;
         }
+        
     </style>
 </head>
 <body>
@@ -317,36 +136,53 @@ i{% comment %} <!DOCTYPE html>
                 <a href="{% url 'payment' %}" class="nav-link text-white"><i class="fas fa-money-bill-wave"></i> Make Payment</a>
             {% endif %}
         </nav>
-    <!-- Main Content -->
-      <div id="content">
-        <button id="toggleSidebar" class="btn btn-dark mb-3 d-md-none"><i class="fas fa-bars"></i></button>
-        {% block content %}{% endblock %}
-    </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let sidebar = document.getElementById("sidebar");
-            let toggleSidebarBtn = document.getElementById("toggleSidebar");
-            let content = document.getElementById("content");
+<!-- Main Content -->
+<div id="content">
+    <button id="toggleSidebar" class="btn btn-dark mb-3 d-md-none">
+        <i class="fas fa-bars"></i>
+    </button>
+    <button id="closeSidebar" class="btn btn-danger d-md-none m-3">
+        <i class="fas fa-times"></i> Close
+    </button>
 
-            // Toggle Sidebar Functionality
-            toggleSidebarBtn.addEventListener("click", function () {
-                sidebar.classList.toggle("open");
+    {% block content %}{% endblock %}
+</div>
 
-                // Save the sidebar state in localStorage
-                if (sidebar.classList.contains("open")) {
-                    localStorage.setItem("sidebarState", "open");
-                } else {
-                    localStorage.setItem("sidebarState", "closed");
-                }
-            });
+<script> 
+document.addEventListener("DOMContentLoaded", function () {
+    let sidebar = document.getElementById("sidebar");
+    let toggleSidebarBtn = document.getElementById("toggleSidebar");
+    let closeSidebarBtn = document.getElementById("closeSidebar");
 
-            // Load Sidebar State on Page Load
-            if (localStorage.getItem("sidebarState") === "open") {
-                sidebar.classList.add("open");
-            }
-        });
-    </script>
+    // Toggle Sidebar
+    toggleSidebarBtn.addEventListener("click", function () {
+        sidebar.classList.toggle("open");
+        closeSidebarBtn.style.display = sidebar.classList.contains("open") ? "block" : "none";
+    });
+
+    // Close Sidebar Button
+    closeSidebarBtn.addEventListener("click", function () {
+        sidebar.classList.remove("open");
+        closeSidebarBtn.style.display = "none";
+    });
+
+    // Close Sidebar on Click Outside (Mobile Only)
+    document.addEventListener("click", function (event) {
+        if (
+            window.innerWidth <= 768 && 
+            !sidebar.contains(event.target) && 
+            !toggleSidebarBtn.contains(event.target)
+        ) {
+            sidebar.classList.remove("open");
+            closeSidebarBtn.style.display = "none";
+        }
+    });
+});
+
+
+</script>
+
 
 <!-- jQuery and Bootstrap JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -403,21 +239,5 @@ i{% comment %} <!DOCTYPE html>
         }, 500); // Delay execution to ensure elements exist
     });
 </script>
-
-<style>
-    /* Sidebar Open & Close Styles */
-    #sidebar {
-        transition: all 0.3s ease-in-out;
-    }
-
-    #sidebar.open {
-        left: 0;
-    }
-
-    #content.expanded {
-        margin-left: 0 !important;
-    }
-</style>
-
 </body>
 </html>
