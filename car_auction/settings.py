@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+import django_heroku
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,8 +23,8 @@ SECRET_KEY = 'django-insecure-^kv%z(5ix_$4hw)2fn=o48g6)09(7hv@ilmhppt%fasbo=i($v
 DEBUG = True
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")]
-
+# Activate Django-Heroku settings
+django_heroku.settings(locals())
 
 # Installed apps
 INSTALLED_APPS = [
@@ -161,13 +162,9 @@ MPESA_CALLBACK_URL = "https://yourwebsite.com/payment/callback/"  # Replace with
 VEHICLE_HISTORY_API_URL = "https://api.example.com/vin/"
 VEHICLE_HISTORY_API_KEY = "your_api_key"
 
-# ✅ Default Primary Key
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Use PostgreSQL database from Heroku
+DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
-
-# Configure PostgreSQL database
-DATABASES['default'] = dj_database_url.config(default=os.getenv("DATABASE_URL"))
-
-# Static files setup for Render
+# Static Files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
