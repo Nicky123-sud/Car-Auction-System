@@ -1,0 +1,19 @@
+{
+  
+    "buildCommand": "apt-get update && apt-get install -y default-libmysqlclient-dev",
+    
+    "version": 2,
+    "builds": [
+      {
+        "src": "car_auction/wsgi.py",
+        "use": "@vercel/python"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "car_auction/wsgi.py"
+      }
+    ]
+  }
+  
