@@ -184,17 +184,22 @@ import os
 from pathlib import Path
 import pymysql
 import dj_database_url
+# ✅ Ensure media files are served in development mode
+from django.conf import settings
+from django.conf.urls.static import static
 
 pymysql.install_as_MySQLdb()
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # Security
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-^kv%z(5ix_$4hw)2fn=o48g6)09(7hv@ilmhppt%fasbo=i($v")
-DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app", ".railway.app", ".onrender.com"]
 
 # Installed apps
 INSTALLED_APPS = [
@@ -264,11 +269,9 @@ CHANNEL_LAYERS = {
 
 # ✅ Fixed Database Configuration (MySQL with dj-database-url)
 DATABASES = {
-    'default': dj_database_url.config(
-        default='mysql://root:@127.0.0.1:3306/cars_auction_db', conn_max_age=
-        
-    )
+    'default': dj_database_url.config(default='mysql://root:@127.0.0.1:3306/cars_auction_db', conn_max_age=600)
 }
+
 
 # Authentication
 AUTH_USER_MODEL = 'auctions.User'
@@ -299,9 +302,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# ✅ Ensure media files are served in development mode
-from django.conf import settings
-from django.conf.urls.static import static
+
 
 urlpatterns = [
     ...
