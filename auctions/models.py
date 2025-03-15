@@ -6,6 +6,8 @@ from PIL import Image
 import os
 from django.core.files.images import get_image_dimensions
 
+
+
 # 1️⃣ Custom User Model
 class User(AbstractUser):
     
@@ -132,8 +134,8 @@ class Bid(models.Model):
 
 # 5️⃣ Payment Model
 class Payment(models.Model):
-    auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_id = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=20, choices=[
@@ -142,7 +144,6 @@ class Payment(models.Model):
         ('failed', 'Failed'),
     ], default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Payment {self.transaction_id} - {self.status}"

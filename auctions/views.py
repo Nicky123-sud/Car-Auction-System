@@ -33,6 +33,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
+import json
+import requests
+import base64
+import datetime
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from .models import Payment
 
 # ------------------ User Authentication ------------------ #
 
@@ -384,80 +393,104 @@ def quick_bid(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
+
 @login_required
 def initiate_payment(request):
     if request.method == "POST":
-        phone_number = request.POST.get("phone_number")
-        amount = request.POST.get("amount")
+        try:
+            # ✅ Parse JSON Data
+            data = json.loads(request.body)
+            phone_number = data.get("phone_number")
+            amount = data.get("amount")
 
-        # Generate Lipa Na M-Pesa Online Shortcode and Password
-        business_short_code = settings.MPESA_BUSINESS_SHORTCODE
-        passkey = settings.MPESA_PASSKEY
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        password = base64.b64encode(f"{business_short_code}{passkey}{timestamp}".encode()).decode()
+            # ✅ Validate Inputs
+            if not phone_number or not amount:
+                return JsonResponse({"error": "Phone number and amount are required"}, status=400)
 
-        # M-Pesa API Endpoint
-        access_token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        stk_push_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+            # ✅ Generate Lipa Na M-Pesa Password
+            business_short_code = settings.MPESA_BUSINESS_SHORTCODE
+            passkey = settings.MPESA_PASSKEY
+            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            password = base64.b64encode(f"{business_short_code}{passkey}{timestamp}".encode()).decode()
 
-        # Get M-Pesa Access Token
-        access_token_response = requests.get(access_token_url, auth=(settings.MPESA_CONSUMER_KEY, settings.MPESA_CONSUMER_SECRET))
-        access_token = access_token_response.json().get("access_token")
+            # ✅ Get M-Pesa Access Token
+            access_token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+            access_token_response = requests.get(access_token_url, auth=(settings.MPESA_CONSUMER_KEY, settings.MPESA_CONSUMER_SECRET))
+            access_token_data = access_token_response.json()
 
-        # STK Push Request
-        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
-        payload = {
-            "BusinessShortCode": business_short_code,
-            "Password": password,
-            "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
-            "Amount": amount,
-            "PartyA": phone_number,
-            "PartyB": business_short_code,
-            "PhoneNumber": phone_number,
-            "CallBackURL": settings.MPESA_CALLBACK_URL,
-            "AccountReference": "CarAuction",
-            "TransactionDesc": "Payment for Car Auction"
-        }
+            if "access_token" not in access_token_data:
+                return JsonResponse({"error": "Failed to obtain access token", "details": access_token_data}, status=400)
 
-        response = requests.post(stk_push_url, json=payload, headers=headers)
-        response_data = response.json()
+            access_token = access_token_data["access_token"]
 
-        # Save Payment Record
-        if response_data.get("ResponseCode") == "0":
-            Payment.objects.create(
-                user=request.user,
-                transaction_id=response_data["CheckoutRequestID"],
-                phone_number=phone_number,
-                amount=amount,
-                status="Pending"
-            )
-            return JsonResponse({"message": "Payment initiated successfully. Check your phone to complete the payment."})
-        else:
-            return JsonResponse({"error": "Payment initiation failed"}, status=400)
-    return render(request, "auctions/payment.html")
+            # ✅ STK Push Request
+            stk_push_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+            headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+            payload = {
+                "BusinessShortCode": business_short_code,
+                "Password": password,
+                "Timestamp": timestamp,
+                "TransactionType": "CustomerPayBillOnline",
+                "Amount": amount,
+                "PartyA": phone_number,
+                "PartyB": business_short_code,
+                "PhoneNumber": phone_number,
+                "CallBackURL": settings.MPESA_CALLBACK_URL,
+                "AccountReference": "CarAuction",
+                "TransactionDesc": "Payment for Car Auction"
+            }
+
+            response = requests.post(stk_push_url, json=payload, headers=headers)
+            response_data = response.json()
+
+            # ✅ Log Response for Debugging
+            if "ResponseCode" not in response_data:
+                return JsonResponse({"error": "Invalid STK Push response", "details": response_data}, status=400)
+
+            # ✅ Save Payment Record if STK Push is Successful
+            if response_data["ResponseCode"] == "0":
+                Payment.objects.create(
+                    user=request.user,
+                    transaction_id=response_data["CheckoutRequestID"],
+                    phone_number=phone_number,
+                    amount=amount,
+                    status="pending"
+                )
+                return JsonResponse({"message": "Payment initiated successfully. Check your phone to complete the payment."})
+            else:
+                return JsonResponse({"error": "Payment initiation failed", "details": response_data}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 @csrf_exempt
 def mpesa_callback(request):
     if request.method == "POST":
-        data = request.body.decode("utf-8")
-        response_data = json.loads(data)
-        
-        checkout_request_id = response_data["Body"]["stkCallback"]["CheckoutRequestID"]
-        result_code = response_data["Body"]["stkCallback"]["ResultCode"]
-        
-        
-        # Get Payment Record
-        payment = Payment.objects.filter(transaction_id=checkout_request_id).first()
-        if payment:
-            if result_code == 0:
-                payment.status = "Completed"
-            else:
-                payment.status = "Failed"
-            payment.save()
+        try:
+            data = json.loads(request.body)
 
-        return JsonResponse({"message": "Payment status updated successfully."})
-    return JsonResponse({"error": "Invalid request"}, status=400)
+            # ✅ Ensure the response contains required fields
+            if "Body" not in data or "stkCallback" not in data["Body"]:
+                return JsonResponse({"error": "Invalid callback structure", "details": data}, status=400)
+
+            checkout_request_id = data["Body"]["stkCallback"]["CheckoutRequestID"]
+            result_code = data["Body"]["stkCallback"]["ResultCode"]
+
+            # ✅ Find the Payment Record
+            payment = Payment.objects.filter(transaction_id=checkout_request_id).first()
+            if payment:
+                payment.status = "completed" if result_code == 0 else "failed"
+                payment.save()
+
+            return JsonResponse({"message": "Payment status updated successfully."})
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 

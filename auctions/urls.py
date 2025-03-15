@@ -57,5 +57,7 @@ urlpatterns = [
     path('sellers/', sellers_list, name='sellers_list'),  # List all sellers
     path('chat/', chat_dashboard, name='chat_dashboard'),  # Chat dashboard
     path('chat/<int:seller_id>/', chat_view, name='chat_view'),
+    path("payment/", initiate_payment, name="initiate_payment"),
+    path("payment/callback/", mpesa_callback, name="mpesa_callback"),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

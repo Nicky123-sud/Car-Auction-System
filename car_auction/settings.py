@@ -149,7 +149,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # ✅ MPesa Payment Integration (Ensure you update credentials)
 # M-Pesa API Credentials
 MPESA_BUSINESS_SHORTCODE = "174379"  # Sandbox shortcode
-MPESA_PASSKEY = "your_real_passkey_here"
+MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
 MPESA_CONSUMER_KEY = "LyfOVAO4qKqEWHXTIRO5adYxwGAK0KkhS1FgGPtGjIyllfsq"
 MPESA_CONSUMER_SECRET = "N4SoZwiX6ddSAjafrcduGLPQ5nnTJfVna03K3sLevbHpOgPLDAaQWWx4pBqAkucV"
 MPESA_CALLBACK_URL = "https://yourwebsite.com/payment/callback/"  # Replace with your real callback URL

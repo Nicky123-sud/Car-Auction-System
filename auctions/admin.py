@@ -123,9 +123,9 @@ class UserProfileAdmin(admin.ModelAdmin):
 # Payment Admin
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("user", "transaction_id", "amount", "status", "timestamp")  # ✅ Removed 'auction'
+    list_display = ("user", "transaction_id", "amount", "status", "created_at")  # ✅ Removed 'auction'
     search_fields = ("user__username", "transaction_id")
-    list_filter = ("status", "timestamp")
+    list_filter = ("status", "created_at")
 
 
 # Register Other Models
