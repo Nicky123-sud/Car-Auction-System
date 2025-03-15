@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Available Sellers{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-center mb-4">🚗 Available Sellers & Their Cars</h2>
+    <div class="row">
+        {% for seller in sellers %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm p-3">
+                <h5>👤 {{ seller.username }}</h5>
+                <p>Email: {{ seller.email }}</p>
+                <h6>Cars for Sale:</h6>
+                {% for car in seller.cars.all %}
+                    <div class="mb-2">
+                        <img src="{{ car.image.url }}" class="img-fluid rounded" alt="Car Image">
+                        <p><strong>{{ car.name }}</strong> - ${{ car.price }}</p>
+                    </div>
+                {% endfor %}
+                <!-- Button to Chat Page -->
+                <a href="{% url 'chat_view' seller.id %}" class="btn btn-primary w-100">💬 Chat with Seller</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -14,17 +14,7 @@ from pathlib import Path
 import os
 import pymysql
 
-
 pymysql.install_as_MySQLdb()
-
-
-INSTALLED_APPS += ["corsheaders"]
-
-MIDDLEWARE.insert(1, "corsheaders.middleware.CorsMiddleware")
-
-CORS_ALLOW_ALL_ORIGINS = True  # Change to allowed frontend domains later
-
-
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,8 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-^kv%z(5ix_$4hw)2fn=o48g6)09(7hv@ilmhppt%fasbo=i($v'
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
-
+ALLOWED_HOSTS = ["127.0.0.1"]
 
 # Installed apps
 INSTALLED_APPS = [
@@ -48,6 +37,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'channels',
+    'corsheaders',  # ✅ Correctly placed CORS headers
 
     # Local apps
     'auctions',
@@ -57,6 +47,7 @@ INSTALLED_APPS = [
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # ✅ Correctly added CORS middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,6 +55,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True  # Change to allowed frontend domains later
 
 # Root URL config
 ROOT_URLCONF = 'car_auction.urls'
@@ -142,22 +136,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# ✅ Static & Media Files (Corrected)
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-
-# ✅ Media Files (User-uploaded images)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-# ✅ Ensure media files are served in development mode
-from django.conf import settings
-from django.conf.urls.static import static
-
-urlpatterns = [
-    ...
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # ✅ MPesa Payment Integration (Ensure you update credentials)
 # M-Pesa API Credentials

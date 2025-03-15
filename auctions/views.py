@@ -31,6 +31,8 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
 
 # ------------------ User Authentication ------------------ #
 
@@ -462,3 +464,32 @@ def mpesa_callback(request):
 def seller_auctions(request):
     # Fetch and display seller's auctions
     return render(request, 'auctions/seller_auctions.html')
+
+
+def sellers_list(request):
+    sellers = User.objects.filter(role="seller")
+    return render(request, "auctions/sellers_list.html", {"sellers": sellers})
+
+
+
+
+
+def chat_dashboard(request):
+    sellers = User.objects.filter(is_staff=True).select_related('userprofile')  # Ensure profile is fetched
+    return render(request, 'auctions/chat_dashboard.html', {'sellers': sellers})
+
+
+def chat_view(request, seller_id):
+    seller = get_object_or_404(User, id=seller_id)
+    return render(request, "auctions/chat.html", {"seller": seller})
+
+
+@receiver(user_logged_in)
+def user_online_status(sender, request, user, **kwargs):
+    user.profile.is_online = True
+    user.profile.save()
+    
+def user_offline_status(sender, request, user, **kwargs):
+    if hasattr(user, "profile"):  # Ensure the profile exists
+        user.profile.is_online = False
+        user.profile.save()

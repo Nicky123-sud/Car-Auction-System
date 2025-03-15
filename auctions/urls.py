@@ -3,10 +3,12 @@ from .views import (
     register, user_login, user_logout, dashboard, create_auction,
     auction_list, auction_detail, place_bid, seller_dashboard, seller_auctions,
     bidder_dashboard, edit_auction, delete_auction, admin_dashboard,
-    add_user, update_user, delete_user, home, profile, search_vehicle, bid_history, notifications, quick_bid, mark_notification_read, initiate_payment, mpesa_callback
+    add_user, update_user, delete_user, home, profile, search_vehicle, bid_history, notifications, quick_bid, mark_notification_read, initiate_payment, mpesa_callback, sellers_list, chat_view, chat_dashboard
 )
 
 from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
 
 # Redirect to login page if accessing `/accounts/login/`
 def redirect_to_login(request):
@@ -50,4 +52,10 @@ urlpatterns = [
     path('notifications/mark-read/<int:notification_id>/', mark_notification_read, name='mark_notification_read'),
     path("payment/", initiate_payment, name="initiate_payment"),
     path("payment/callback/", mpesa_callback, name="mpesa_callback"),
-]
+    path('sellers/', sellers_list, name='sellers_list'),
+  
+    path('sellers/', sellers_list, name='sellers_list'),  # List all sellers
+    path('chat/', chat_dashboard, name='chat_dashboard'),  # Chat dashboard
+    path('chat/<int:seller_id>/', chat_view, name='chat_view'),
+    
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

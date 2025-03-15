@@ -13,7 +13,14 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="{% url 'auction_list' %}"><i class="fas fa-car"></i> Browse Auctions</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'bid_history' %}"><i class="fas fa-gavel"></i> My Bids</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'notifications' %}"><i class="fas fa-bell"></i> Notifications <span class="badge bg-warning" id="notifCount">{{ unread_notifications_count }}</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'sellers_list' %}"><i class="fas fa-store"></i> Available Sellers</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'chat_dashboard' %}"><i class="fas fa-comments"></i> Chat Section</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'notifications' %}">
+                                <i class="fas fa-bell"></i> Notifications
+                                <span class="badge bg-warning" id="notifCount">{{ unread_notifications_count }}</span>
+                            </a>
+                        </li>
                         <li class="nav-item"><a class="btn btn-warning text-dark fw-bold" href="{% url 'initiate_payment' %}"><i class="fas fa-money-bill-wave"></i> Make Payment</a></li>
                     </ul>
                 </div>
